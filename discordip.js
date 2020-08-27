@@ -1,3 +1,4 @@
+process.chdir(__dirname);
 const config = JSON.parse(require('fs').readFileSync('config.json','utf8'))
 const Discord = require('discord.js');
 const https=require('https')
@@ -14,7 +15,11 @@ client.on('message',message=>{
 })
 client.login(config.discordToken);
 function sendIP() {
-	getIP().then(ip=>client.channels.cache.get(config.discordChannel).send("my ip:"+ip))
+	const channel=client.channels.cache.get(config.discordChannel);
+	channel.startTyping();
+	getIP()
+		.then(ip=>channel.send("my ip:"+ip))
+		.then(()=>channel.stopTyping())
 }
 function getIP() {
 	return new Promise((resolve,reject)=>{
@@ -24,4 +29,12 @@ function getIP() {
 			res.on('end',()=>resolve(data))
 		})
 	})
+}
+let connected=true;
+exports.stop=function () {
+	client.destroy();
+	connected=false;
+}
+exports.listening=function () {
+	return connected;
 }
